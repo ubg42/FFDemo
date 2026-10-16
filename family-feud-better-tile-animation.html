@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Feud — Neon Game Show</title>
+<style>
+:root{--blue:#078cff;--deep:#020a35;--navy:#06184f;--gold:#ffe52f;--cyan:#54f5ff;--white:#f7fcff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--white);font-family:Arial,Helvetica,sans-serif;background:
+ radial-gradient(ellipse at 50% 49%,#1476e6 0,#063b9c 28%,#031342 66%,#010626 100%);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.48;background-image:radial-gradient(circle,#30c8ff 1.5px,transparent 2px),radial-gradient(circle,#147eff 1.5px,transparent 2px);background-size:20px 20px,31px 31px;background-position:0 0,8px 8px;mask-image:linear-gradient(to bottom,#fff,transparent 80%)}
+.stage{max-width:1180px;margin:auto;min-height:100vh;padding:18px 18px 12px;position:relative;isolation:isolate}
+.top-glow{position:absolute;inset:0 3% auto;height:9px;border-radius:99px;background:#38eaff;box-shadow:0 0 10px #38eaff,0 0 30px #008cff;z-index:3}
+.masthead{height:70px;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;z-index:5}
+.kicker{font-size:.68rem;letter-spacing:.35em;font-weight:900;color:#8befff;text-shadow:0 0 10px #22c8ff}
+.round-label{display:inline-block;color:#fff;font-weight:900;letter-spacing:.16em;font-size:.72rem;margin-top:5px}
+.show-layout{position:relative;padding:0 90px 4px;margin-top:0}
+.player{position:absolute;top:4px;width:82px;text-align:center;z-index:4;cursor:pointer;user-select:none;color:#fff;text-shadow:0 2px 5px #000}
+.player.left{left:4px}.player.right{right:4px}
+.avatar{width:64px;height:64px;margin:auto;border:2px solid #80f5ff;border-radius:12px;background:linear-gradient(140deg,#0f2e88,#0787e5);box-shadow:0 0 0 2px #00133c,0 0 16px #14e4ff;display:grid;place-items:center;font-size:2.55rem;transition:.2s}
+.player.locked,.score-pod.locked{opacity:.42;filter:grayscale(1);cursor:not-allowed}
+.player.active .avatar{border-color:#fff36b;box-shadow:0 0 0 3px #ffce17,0 0 25px #ffdf2d;transform:translateY(-2px)}
+.player-name{font-size:.74rem;font-weight:900;margin-top:5px;letter-spacing:.04em}
+.score-pod{position:absolute;top:47%;transform:translateY(-50%);width:100px;height:68px;display:grid;place-items:center;border:4px solid #ffe92b;background:linear-gradient(120deg,#051a73,#0d39d7);border-radius:8px;box-shadow:0 0 0 3px #061039,0 0 0 6px #e5faff,0 0 22px #ffeb35,inset 0 0 14px #367eff;z-index:3;cursor:pointer;transition:.2s}
+.score-pod.left{left:0}.score-pod.right{right:0}
+.score-pod.active{border-color:#fff;box-shadow:0 0 0 3px #ffe52f,0 0 0 6px #fff,0 0 32px #ffe52f,inset 0 0 18px #62ecff}
+.score-pod small{display:block;font-size:.55rem;letter-spacing:.13em;color:#9deaff;text-align:center;font-weight:900}
+.score-pod strong{display:block;font-size:1.8rem;line-height:1.05;color:#fff;text-shadow:0 0 12px #8ebfff}
+.question-plaque{position:relative;z-index:5;max-width:800px;margin:0 auto 10px;padding:15px 24px 14px;text-align:center;background:linear-gradient(180deg,#07153a,#061333);border:2px solid #6ceaff;border-radius:8px;box-shadow:0 5px 0 #02071e,0 0 0 4px #0e4e87,0 0 22px #1dd8ff;clip-path:polygon(0 0,100% 0,100% 85%,96% 100%,4% 100%,0 85%)}
+.question-label{font-size:.62rem;letter-spacing:.23em;color:#61e9ff;font-weight:900;margin-bottom:6px}
+.question {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-stretch: condensed;
+  font-size: clamp(1.1rem, 2.8vw, 1.8rem);
+  line-height: 1.15;
+  letter-spacing: .02em;
+  font-weight: 500;
+  text-shadow: 0 2px 6px #000;
+  min-height: 1.2em;
+}
+.clock-row{display:flex;justify-content:center;align-items:center;gap:12px;margin:0 auto 14px;position:relative;z-index:4}
+.clock{background:linear-gradient(180deg,#1744f2,#0822a1);border:3px solid #ffe738;box-shadow:0 0 0 3px #061039,0 0 19px #ffe52f;border-radius:3px;min-width:112px;padding:5px 12px 7px;text-align:center;color:#fff;font-family:Impact,Arial,sans-serif;font-size:2rem;letter-spacing:.06em;text-shadow:0 0 10px #9af7ff}
+.clock.warning{color:#ff6679;animation:pulse .7s infinite alternate}
+.clock-actions button{font-size:.7rem;padding:7px 9px}
+button{font-family:inherit}
+.board-stage{position:relative;max-width:1000px;margin:0 auto;padding:0 100px}
+.board-shell{position:relative;width:100%;max-width:760px;margin:0 auto;padding:13px;border:4px solid var(--gold);border-radius:15px;background:linear-gradient(135deg,#07143c,#082b6b 50%,#031341);box-shadow:0 0 0 4px #06133a,0 0 0 7px #b9fbff,0 0 0 10px #263fff,0 0 22px 11px #ffeb24,0 0 45px 20px #00baff,inset 0 0 20px #00a5ff;z-index:2}
+.board-shell:before{content:"";position:absolute;inset:5px;border-radius:8px;pointer-events:none;background:radial-gradient(circle,#fff56a 1.6px,transparent 3px);background-size:19px 19px;opacity:.32;mask-image:linear-gradient(90deg,#fff 0,transparent 22%,transparent 78%,#fff 100%)}
+.board{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+/* Answer tiles: two real faces inside a 3D-flipping card */
+.answer-tile{
+  height:clamp(55px,8vw,78px);width:100%;min-width:0;position:relative;display:block;
+  padding:0;border:0;border-radius:4px;background:transparent;color:#fff;cursor:pointer;
+  perspective:1000px;isolation:isolate;overflow:visible;appearance:none;-webkit-appearance:none;
+  transition:filter .18s ease;
+}
+.answer-tile:hover{filter:brightness(1.14)}
+.answer-tile:focus-visible{outline:3px solid white;outline-offset:3px;z-index:5}
+.tile-inner{position:absolute;inset:0;border-radius:3px;transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+.answer-tile.hidden .tile-inner{transform:rotateY(0deg)}
+.answer-tile.revealed .tile-inner{transform:rotateY(180deg)}
+.tile-face{
+  position:absolute;inset:0;display:grid;align-items:stretch;overflow:hidden;border:2px solid #d6fbff;
+  border-radius:3px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:inset 0 0 0 2px #298fff,inset 0 0 16px #50d5ff,0 0 8px #05baff;
+}
+.tile-number{
+  place-items:center;background:linear-gradient(125deg,#087ff1 0%,#0750bb 55%,#062d78 100%);
+  font-family:Impact,'Arial Narrow',Arial,sans-serif;font-size:clamp(1.65rem,3.2vw,2.15rem);color:#fff;
+  text-shadow:0 2px 0 #003274,0 0 12px #7df4ff,inset 0 0 8px #fff;
+}
+.tile-number::before,.tile-answer::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.09) 34%,transparent 54%);
+}
+.tile-answer{
+  grid-template-columns:minmax(0,1fr) 54px;transform:rotateY(180deg);
+  background:linear-gradient(110deg,#0c8bf9,#0754b8 60%,#073b8d);
+}
+.tile-answer .answer-text{
+  position:relative;z-index:1;align-self:center;text-align:center;padding:4px 7px;min-width:0;
+  font-weight:900;text-transform:uppercase;letter-spacing:.025em;
+  font-size:clamp(.72rem,1.9vw,1.08rem);line-height:1.08;text-shadow:0 2px 5px #001038;
+  overflow-wrap:anywhere;
+}
+.tile-answer .points{
+  position:relative;z-index:1;display:grid;place-items:center;border-left:2px solid #a9f6ff;
+  background:linear-gradient(180deg,#167cda,#063c97);font-family:Impact,Arial,sans-serif;
+  font-size:clamp(1.2rem,3vw,1.7rem);text-shadow:0 2px 5px #001038;
+}
+.answer-tile.flipping{z-index:4;filter:brightness(1.18)}
+.answer-tile.flipping .tile-inner{
+  animation:answerTileFlip .84s cubic-bezier(.19,.76,.23,1) both;
+}
+.answer-tile.flipping::after{
+  content:"";position:absolute;inset:-3px;z-index:3;border:1px solid rgba(184,250,255,.9);border-radius:5px;
+  box-shadow:0 0 10px #4af0ff,0 0 22px rgba(0,190,255,.7);pointer-events:none;
+  animation:tileRevealFlash .84s ease-out both;
+}
+@keyframes answerTileFlip{
+  0%{transform:rotateY(0deg) scale(1)}
+  25%{transform:rotateY(54deg) scale(1.045)}
+  48%{transform:rotateY(105deg) scale(1.085)}
+  72%{transform:rotateY(188deg) scale(1.045)}
+  86%{transform:rotateY(202deg) scale(.99)}
+  100%{transform:rotateY(180deg) scale(1)}
+}
+@keyframes tileRevealFlash{
+  0%,100%{opacity:0;filter:brightness(1)}
+  35%{opacity:1;filter:brightness(1.8)}
+  60%{opacity:.75;filter:brightness(1.35)}
+}
+@media (prefers-reduced-motion:reduce){
+  .answer-tile,.tile-inner{transition:none!important}
+  .answer-tile.flipping .tile-inner,.answer-tile.flipping::after{animation:none!important}
+}
+.bottom-area{position:relative;z-index:4;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:17px 0 4px}
+.ctrl{border:1px solid #7beaff;border-radius:5px;color:white;background:linear-gradient(#1266c9,#072a7a);padding:10px 14px;font-size:.79rem;font-weight:900;letter-spacing:.04em;cursor:pointer;box-shadow:0 3px 0 #020824,0 0 12px #077fff;transition:.15s}
+.ctrl:hover{filter:brightness(1.2);transform:translateY(-1px)}
+.ctrl.gold{background:linear-gradient(#fff276,#e5a900);color:#091743;border-color:#fff6a3;box-shadow:0 3px 0 #705000,0 0 12px #ffda26}
+.ctrl.danger{background:linear-gradient(#ff6779,#bd102a);border-color:#ffabb6}
+.round-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin:15px 0 3px}
+.round-nav button{min-width:45px}
+.round-status{font-size:.76rem;font-weight:900;color:#b9f4ff;letter-spacing:.13em;text-transform:uppercase;min-width:126px;text-align:center}
+.round-dots{display:flex;justify-content:center;gap:7px;margin:9px 0 0}
+.round-dot{width:9px;height:9px;border-radius:50%;background:#194c98;border:1px solid #62dfff;box-shadow:0 0 6px #008bff;cursor:pointer;padding:0}
+.round-dot.current{background:#fff04f;border-color:white;box-shadow:0 0 9px #ffe52f;width:23px;border-radius:99px}
+.strikes{height:31px;display:flex;justify-content:center;align-items:center;gap:10px;margin-top:13px}
+.strike-x{font-family:Impact,Arial,sans-serif;color:#4c6a9e;font-size:2rem;opacity:.6;line-height:1;text-shadow:0 0 8px #07123a}
+.strike-x.on{color:#ff273e;opacity:1;text-shadow:0 0 px #ff3349,0 0 30px #ff132d}
+.brand{position:relative;z-index:1;text-align:center;margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(2.5rem,8.2vw,5.7rem);font-weight:1000;line-height:.76;letter-spacing:-.06em;color:#ffdf28;-webkit-text-stroke:1px #7b2c00;text-shadow:0 3px 0 #a53b00,0 6px 0 #612100,2px 9px 0 #041b64,0 0 7px #fff1a0,0 0 22px #ff9d00;transform:rotate(-2deg);filter:drop-shadow(0 8px 3px #0009)}
+.brand span{display:block;font-size:.94em;margin-top:9px;letter-spacing:.01em}
+.footer{text-align:center;color:#7abef9;font-size:.65rem;letter-spacing:.12em;margin-top:17px;padding-bottom:10px}
+@keyframes pulse{from{filter:brightness(1)}to{filter:brightness(1.8)}}
+@keyframes shimmer{0%,100%{opacity:.35}50%{opacity:.65}}
+@media(max-width:660px){.stage{padding:12px 9px}.masthead{height:54px}.show-layout{padding:0 0 4px}.player{position:static;display:inline-block;width:76px;margin:0 6px 8px}.player.left,.player.right{left:auto;right:auto}.player .avatar{width:50px;height:50px;font-size:2rem}.player-name{font-size:.67rem}.show-layout{display:flex;flex-wrap:wrap;justify-content:center}.question-plaque{order:-1;width:100%;margin-bottom:11px}.clock-row{margin-bottom:11px}.board-stage{padding:0}.score-pod{position:static;display:inline-block;transform:none;width:78px;height:54px;margin:3px 5px 11px;border-width:3px;box-shadow:0 0 0 2px #061039,0 0 0 4px #e5faff,0 0 14px #ffeb35}.score-pod strong{font-size:1.45rem}.score-pod small{font-size:.48rem}.board-shell{padding:7px;border-width:3px;box-shadow:0 0 0 2px #06133a,0 0 0 4px #b9fbff,0 0 0 6px #263fff,0 0 17px 7px #ffeb24,0 0 30px 12px #00baff}.answer-tile{height:60px}.tile-answer{grid-template-columns:minmax(0,1fr) 39px}.tile-answer .answer-text{font-size:clamp(.62rem,2.25vw,.86rem);padding:3px}.tile-answer .points{font-size:1.25rem}.bottom-area{gap:8px}.ctrl{padding:9px 10px;font-size:.72rem}.brand{margin-top:17px}}
+@media(max-width:390px){.answer-tile{height:57px}.tile-answer{grid-template-columns:minmax(0,1fr) 31px}.tile-answer .answer-text{font-size:.6rem}.tile-answer .points{font-size:1.05rem}.score-pod{width:67px}.player{width:65px;margin-left:2px;margin-right:2px}.round-status{min-width:105px;font-size:.66rem}}
+/* Full-screen game-show strike animation */
+#strikeFlash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(255, 0, 40, .30), rgba(25, 0, 12, .12) 42%, transparent 72%);
+}
+#strikeFlash.show { animation: strikeFlashFade 1.15s ease-out both; }
+#strikePopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10000;
+  color: #ff1738;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(16rem, 45vw, 36rem);
+  font-weight: 900;
+  line-height: .85;
+  -webkit-text-stroke: 2px #ffd8df;
+  text-shadow: 0 0 12px #ff1738, 0 0 32px #ff1738, 0 0 65px #ff001e, 0 8px 0 #730019;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.15) rotate(-18deg);
+  transform-origin: center;
+  white-space: nowrap;
+}
+#strikeFlash.show #strikePopup { animation: strikeAnimation 1.15s cubic-bezier(.16, 1, .3, 1) both; }
+#strikeLabel {
+  position: fixed;
+  top: calc(50% + clamp(10rem, 25vw, 16rem));
+  left: 50%;
+  color: #fff;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-style: italic;
+  letter-spacing: .12em;
+  text-shadow: 0 4px 0 #92001a, 0 0 10px #ff1738, 0 0 30px #ff1738;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.2) skewX(-12deg);
+  white-space: nowrap;
+}
+#strikeFlash.show #strikeLabel { animation: strikeLabelAnimation .85s .08s ease-out both; }
+.strike-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(78vw, 78vh);
+  aspect-ratio: 1;
+  border: clamp(4px, .8vw, 11px) solid rgba(255, 30, 65, .9);
+  border-radius: 50%;
+  box-shadow: 0 0 25px #ff1738, inset 0 0 25px #ff1738;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.18);
+}
+#strikeFlash.show .strike-ring { animation: strikeRingAnimation .9s ease-out both; }
+.strike-x.on { animation: strikeLight .32s ease-out both; }
+@keyframes strikeFlashFade {
+  0%, 100% { opacity: 0; }
+  10%, 48% { opacity: 1; }
+  65% { opacity: .65; }
+}
+@keyframes strikeAnimation {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.15) rotate(-18deg); }
+  17% { opacity: 1; transform: translate(-50%, -50%) scale(1.28) rotate(7deg); }
+  31% { opacity: 1; transform: translate(-50%, -50%) scale(.92) rotate(-4deg); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(1deg); }
+  58%, 76% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.68) rotate(5deg); }
+}
+@keyframes strikeLabelAnimation {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.2) skewX(-12deg); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.16) skewX(-12deg); }
+  50%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1) skewX(-12deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.75) skewX(-12deg); }
+}
+@keyframes strikeRingAnimation {
+  0% { opacity: .9; transform: translate(-50%, -50%) scale(.18); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.45); }
+}
+@keyframes strikeLight {
+  0% { transform: scale(.7); filter: brightness(1); }
+  55% { transform: scale(1.4); filter: brightness(2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #strikeFlash.show, #strikeFlash.show #strikePopup, #strikeFlash.show #strikeLabel, #strikeFlash.show .strike-ring, .strike-x.on { animation-duration: .01ms; }
+}
+</style>
+</head>
+<body>
+<main class="stage">
+  <div class="top-glow"></div>
+  <header class="masthead"><div><div class="kicker">THE BIG SURVEY SHOW</div><div class="round-label" id="roundMini">ROUND 1</div></div></header>
+
+  <section class="show-layout" aria-label="Game show stage">
+    <div class="player left active" id="playerA" role="button" tabindex="0" aria-label="Select Kate's team">
+      <div class="avatar" aria-hidden="true">👩🏻‍🦱</div><div class="player-name">KATE'S TEAM</div>
+    </div>
+    <div class="player right" id="playerB" role="button" tabindex="0" aria-label="Select Jeff's team">
+      <div class="avatar" aria-hidden="true">👨🏻</div><div class="player-name">JEFF'S TEAM</div>
+    </div>
+    <div class="question-plaque">
+      <div class="question-label">THE QUESTION IS…</div>
+      <div class="question" id="question">Name a popular retro game.</div>
+    </div>
+  </section>
+
+  <div class="clock-row">
+    <div class="clock" id="clock" aria-live="polite">1:00</div>
+    <div class="clock-actions"><button class="ctrl" id="timerToggle">▶ START</button><button class="ctrl" id="timerReset">↻ RESET</button></div>
+  </div>
+
+  <section class="board-stage" aria-label="Scoreboard and answers">
+    <button class="score-pod left active" id="scorePodA" aria-label="Select Kate's team"><span><small>KATE'S SCORE</small><strong id="scoreA">0</strong></span></button>
+    <button class="score-pod right" id="scorePodB" aria-label="Select Jeff's team"><span><small>JEFF'S SCORE</small><strong id="scoreB">0</strong></span></button>
+    <div class="board-shell" aria-label="Answers board"><div class="board" id="board"></div></div>
+  </section>
+
+  <div class="strikes" aria-label="Strikes"><span class="strike-x" id="strike1">X</span><span class="strike-x" id="strike2">X</span><span class="strike-x" id="strike3">X</span></div>
+
+  <div class="bottom-area">
+    <button class="ctrl danger" id="addStrike">✕ STRIKE</button>
+    <button class="ctrl" id="resetStrikes">RESET Xs</button>
+    <button class="ctrl gold" id="revealAll">REVEAL ALL</button>
+    <button class="ctrl" id="resetRound">RESET ROUND</button>
+  </div>
+  <nav class="round-nav" aria-label="Round navigation">
+    <button class="ctrl" id="prevRound" aria-label="Previous round">◀</button>
+    <div class="round-status" id="roundStatus">ROUND 1 OF 6</div>
+    <button class="ctrl" id="nextRound" aria-label="Next round">▶</button>
+  </nav>
+  <div class="round-dots" id="roundDots" aria-label="Choose a round"></div>
+  <div class="brand" aria-label="Family Feud">FAMILY<span>FEUD</span></div>
+  <div class="footer">CLICK A TEAM TO SELECT IT · CLICK AN ANSWER TO REVEAL IT</div>
+</main>
+<div id="strikeFlash" aria-hidden="true">
+  <div class="strike-ring"></div>
+  <div id="strikePopup">X</div>
+  <div id="strikeLabel">STRIKE!</div>
+</div>
+<script>
+// Edit the questions and answers here. Each round should have six answers.
+const rounds = [
+  { question: "Name a popular retro game.", answers: [
+    ["Tetris",30],["Pong",5],["Pac-Man",25],["Donkey Kong",2],["Zelda",20],["Space Invaders",14]
+  ]},
+  { question: "Name something people do as soon as they wake up.", answers: [
+    ["Check their phone",31],["Brush their teeth",24],["Go to the toilet",18],["Have a shower",12],["Eat breakfast",9],["Get dressed",6]
+  ]},
+  { question: "Name a popular pizza topping.", answers: [
+    ["Pepperoni",35],["Cheese",25],["Mushrooms",14],["Ham",11],["Olives",8],["Pineapple",7]
+  ]},
+  { question: "Name something you pack for a holiday.", answers: [
+    ["Clothes",32],["Phone",20],["Toothbrush",16],["Charger",12],["Swimsuit",11],["Passport",9]
+  ]},
+  { question: "Name an animal people are scared of.", answers: [
+    ["Spider",34],["Snake",24],["Shark",15],["Lion",11],["Mouse",9],["Wasp",7]
+  ]},
+  { question: "Name something you bring to school.", answers: [
+    ["Books",29],["Pencils",22],["Backpack",17],["Lunchbox",13],["Ruler",10],["Laptop",9]
+  ]}
+];
+
+let roundIndex = 0;
+let revealed = new Set();
+let flippingTiles = new Set();
+let scores = [0, 0];
+let activeTeam = 0;
+let strikes = [0, 0];
+let lockedTeams = new Set();
+let secondsLeft = 60;
+let timerId = null;
+let awarded = new Set();
+const $ = id => document.getElementById(id);
+
+function renderBoard(){
+  const round = rounds[roundIndex];
+  $('question').textContent = round.question;
+  $('roundMini').textContent = `ROUND ${roundIndex + 1}`;
+  $('roundStatus').textContent = `ROUND ${roundIndex + 1} OF ${rounds.length}`;
+  $('prevRound').disabled = roundIndex === 0;
+  $('nextRound').disabled = roundIndex === rounds.length - 1;
+  $('board').innerHTML = '';
+  round.answers.forEach(([answer, points], i) => {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'answer-tile' + (revealed.has(i) ? ' revealed' : ' hidden') + (flippingTiles.has(i) ? ' flipping' : '');
+    tile.dataset.number = String(i + 1);
+    tile.setAttribute('aria-label', revealed.has(i) ? `${answer}, ${points} points` : `Reveal answer ${i + 1}`);
+    const inner = document.createElement('div');
+    inner.className = 'tile-inner';
+
+    const numberFace = document.createElement('div');
+    numberFace.className = 'tile-face tile-number';
+    const numberLabel = document.createElement('span');
+    numberLabel.textContent = String(i + 1);
+    numberFace.appendChild(numberLabel);
+
+    const answerFace = document.createElement('div');
+    answerFace.className = 'tile-face tile-answer';
+    const answerText = document.createElement('span');
+    answerText.className = 'answer-text';
+    answerText.textContent = answer;
+    const pointText = document.createElement('span');
+    pointText.className = 'points';
+    pointText.textContent = points;
+    answerFace.append(answerText, pointText);
+
+    inner.append(numberFace, answerFace);
+    tile.appendChild(inner);
+    tile.addEventListener('click', () => {
+      if (!revealed.has(i)) {
+        revealed.add(i);
+        flippingTiles.add(i);
+        setTimeout(() => flippingTiles.delete(i), 900);
+        // Award this answer once to whichever team is selected when it is revealed.
+        if (!awarded.has(i)) { if (!lockedTeams.has(activeTeam)) scores[activeTeam] += points; awarded.add(i); updateScores(); }
+        renderBoard();
+      }
+    });
+    $('board').appendChild(tile);
+  });
+  renderDots();
+}
+function updateScores(){ $('scoreA').textContent = scores[0]; $('scoreB').textContent = scores[1]; }
+function chooseTeam(team){
+  // A team with three strikes is locked out for the rest of the round.
+  if (lockedTeams.has(team)) {
+    const otherTeam = 1 - team;
+    if (lockedTeams.has(otherTeam)) return;
+    team = otherTeam;
+  }
+  activeTeam = team;
+  ['playerA','scorePodA'].forEach(id => $(id).classList.toggle('active', team === 0));
+  ['playerB','scorePodB'].forEach(id => $(id).classList.toggle('active', team === 1));
+  ['playerA','scorePodA'].forEach(id => $(id).classList.toggle('locked', lockedTeams.has(0)));
+  ['playerB','scorePodB'].forEach(id => $(id).classList.toggle('locked', lockedTeams.has(1)));
+  setStrikes();
+}
+function setStrikes(){ for(let i=1;i<=3;i++) $(`strike${i}`).classList.toggle('on', i <= strikes[activeTeam]); }
+function resetTimer(){ pauseTimer(); secondsLeft = 60; updateClock(); }
+function updateClock(){
+  const m = Math.floor(secondsLeft / 60), s = secondsLeft % 60;
+  $('clock').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  $('clock').classList.toggle('warning', secondsLeft <= 10);
+}
+function pauseTimer(){ if(timerId !== null){ clearInterval(timerId); timerId = null; } $('timerToggle').textContent = '▶ START'; }
+function toggleTimer(){
+  if(timerId !== null){ pauseTimer(); return; }
+  if(secondsLeft <= 0) secondsLeft = 60;
+  $('timerToggle').textContent = 'Ⅱ PAUSE';
+  timerId = setInterval(() => {
+    secondsLeft = Math.max(0, secondsLeft - 1); updateClock();
+    if(secondsLeft === 0){ pauseTimer(); $('timerToggle').textContent = '↻ RESTART'; }
+  }, 1000);
+}
+function resetCurrentRound(){ revealed.clear(); flippingTiles.clear(); awarded.clear(); scores = [0, 0]; updateScores(); strikes = [0, 0]; lockedTeams.clear(); setStrikes(); chooseTeam(activeTeam); resetTimer(); renderBoard(); }
+function goToRound(index){
+  if(index < 0 || index >= rounds.length) return;
+  roundIndex = index; revealed = new Set(); flippingTiles.clear(); awarded = new Set(); strikes = [0, 0]; lockedTeams.clear(); setStrikes(); chooseTeam(activeTeam); resetTimer(); renderBoard();
+}
+function renderDots(){
+  $('roundDots').innerHTML = '';
+  rounds.forEach((_, i) => {
+    const dot = document.createElement('button'); dot.className = 'round-dot' + (i === roundIndex ? ' current' : '');
+    dot.setAttribute('aria-label', `Go to round ${i + 1}`); dot.title = `Round ${i + 1}`;
+    dot.addEventListener('click', () => goToRound(i)); $('roundDots').appendChild(dot);
+  });
+}
+['playerA','scorePodA'].forEach(id => $(id).addEventListener('click', () => chooseTeam(0)));
+['playerB','scorePodB'].forEach(id => $(id).addEventListener('click', () => chooseTeam(1)));
+$('playerA').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){e.preventDefault();chooseTeam(0);} });
+$('playerB').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){e.preventDefault();chooseTeam(1);} });
+function playStrikeAnimation() {
+  const flash = $('strikeFlash');
+  flash.classList.remove('show');
+  // Force a reflow so the animation can replay on consecutive strikes.
+  void flash.offsetWidth;
+  flash.classList.add('show');
+}
+$('addStrike').addEventListener('click', () => {
+  if (lockedTeams.has(activeTeam)) return;
+  strikes[activeTeam] = Math.min(3, strikes[activeTeam] + 1);
+  setStrikes();
+  playStrikeAnimation();
+  if (strikes[activeTeam] === 3) {
+    const lockedTeam = activeTeam;
+    lockedTeams.add(lockedTeam);
+    // Update the team visuals, then hand control to the other team.
+    ['playerA','scorePodA'].forEach(id => $(id).classList.toggle('locked', lockedTeams.has(0)));
+    ['playerB','scorePodB'].forEach(id => $(id).classList.toggle('locked', lockedTeams.has(1)));
+    const otherTeam = 1 - lockedTeam;
+    chooseTeam(otherTeam);
+  }
+});
+$('resetStrikes').addEventListener('click', () => {
+  // This clears the display for the current team, but does not undo a 3-strike lockout.
+  if (!lockedTeams.has(activeTeam)) strikes[activeTeam] = 0;
+  setStrikes();
+});
+$('revealAll').addEventListener('click', () => {
+  rounds[roundIndex].answers.forEach((_, i) => {
+    if (!revealed.has(i)) flippingTiles.add(i);
+    if (!awarded.has(i)) { if (!lockedTeams.has(activeTeam)) scores[activeTeam] += rounds[roundIndex].answers[i][1]; awarded.add(i); }
+    revealed.add(i);
+  });
+  setTimeout(() => flippingTiles.clear(), 900);
+  updateScores();
+  renderBoard();
+});
+$('resetRound').addEventListener('click', resetCurrentRound);
+$('prevRound').addEventListener('click', () => goToRound(roundIndex - 1));
+$('nextRound').addEventListener('click', () => goToRound(roundIndex + 1));
+$('timerToggle').addEventListener('click', toggleTimer);
+$('timerReset').addEventListener('click', resetTimer);
+updateScores(); updateClock(); renderBoard(); chooseTeam(0);
+</script>
+</body>
+</html>
